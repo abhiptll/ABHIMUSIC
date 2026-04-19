@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Mixtape" />
+<meta name="theme-color" content="#0a0a0a" />
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%230a0a0a'/><circle cx='90' cy='90' r='56' fill='none' stroke='%23ff3b6b' stroke-width='6'/><circle cx='90' cy='90' r='10' fill='%23ff3b6b'/></svg>" />
+<title>Mixtape</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #151515;
+    --panel-2: #1f1f1f;
+    --text: #f2f2f2;
+    --muted: #888;
+    --accent: #ff3b6b;
+    --accent-2: #6b5bff;
+    --border: #262626;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    height: 100%;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  header {
+    padding: 16px 20px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  header .count {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 20px 12px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:active { background: var(--panel-2); transform: scale(0.97); }
+  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; }
+  .btn.danger { color: #ff6b6b; }
+
+  input[type="file"] { display: none; }
+
+  .tracklist {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 12px 220px;
+  }
+  .track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin: 4px 0;
+    background: var(--panel);
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+  .track.active {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, rgba(255,59,107,0.12), rgba(107,91,255,0.12));
+  }
+  .track .num {
+    width: 28px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .track .title {
+    flex: 1;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .track .remove {
+    color: var(--muted);
+    padding: 6px 8px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .empty strong { color: var(--text); display: block; font-size: 17px; margin-bottom: 8px; }
+
+  .player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 15, 15, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border);
+    padding: 14px 18px calc(18px + env(safe-area-inset-bottom));
+    z-index: 10;
+  }
+  .now-playing {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+  }
+  .now-playing.idle { color: var(--muted); font-weight: 400; }
+
+  .seek {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .seek .time {
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 38px;
+  }
+  .seek input[type="range"] { flex: 1; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--panel-2);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 12px;
+  }
+  .ctrl {
+    background: none;
+    border: none;
+    color: var(--text);
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ctrl svg { width: 28px; height: 28px; }
+  .ctrl.play {
+    background: var(--text);
+    color: var(--bg);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+  }
+  .ctrl.play svg { width: 26px; height: 26px; }
+  .ctrl:disabled { opacity: 0.3; }
+
+  .extras {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .extras .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    flex: 1;
+  }
+  .extras .pill label { white-space: nowrap; }
+  .extras .pill input[type="range"] { flex: 1; min-width: 40px; }
+  .extras .pill .val { color: var(--text); font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; font-size: 11px; }
+  .extras .pill input[type="checkbox"] { accent-color: var(--accent); }
+
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 8px 20px;
+  }
+
+  @media (max-width: 380px) {
+    .extras { flex-direction: column; align-items: stretch; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Mixtape</h1>
+  <span class="count" id="count">0 tracks</span>
+</header>
+
+<div class="toolbar">
+  <label class="btn primary" for="file-input">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    Add Songs
+  </label>
+  <input type="file" id="file-input" accept="audio/*" multiple />
+  <button class="btn" id="shuffle-btn" title="Shuffle playlist">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+    Shuffle
+  </button>
+  <button class="btn danger" id="clear-btn" title="Remove all tracks">Clear All</button>
+</div>
+
+<div class="tracklist" id="tracklist">
+  <div class="empty" id="empty">
+    <strong>No tracks yet</strong>
+    Tap <b>Add Songs</b> to pick your remixes from the Files app on your iPhone.
+  </div>
+</div>
+
+<div class="player">
+  <div class="now-playing idle" id="now-playing">Nothing playing</div>
+
+  <div class="seek">
+    <span class="time" id="time-current">0:00</span>
+    <input type="range" id="seek" min="0" max="100" value="0" step="0.1" />
+    <span class="time" id="time-total">0:00</span>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl" id="prev-btn" aria-label="Previous">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM9.5 12l8.5 6V6z"/></svg>
+    </button>
+    <button class="ctrl play" id="play-btn" aria-label="Play">
+      <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="ctrl" id="next-btn" aria-label="Next">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>
+    </button>
+  </div>
+
+  <div class="extras">
+    <div class="pill">
+      <label for="speed">Speed</label>
+      <input type="range" id="speed" min="0.5" max="1.5" value="1" step="0.05" />
+      <span class="val" id="speed-val">1.00x</span>
+    </div>
+    <div class="pill">
+      <label><input type="checkbox" id="crossfade-on" /> Crossfade</label>
+      <input type="range" id="crossfade-sec" min="1" max="10" value="4" step="1" />
+      <span class="val" id="crossfade-val">4s</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Mixtape — a tiny DJ-friendly music player for iOS home-screen
+   Single-file PWA. Stores audio files in IndexedDB so your
+   library sticks around between sessions.
+   ============================================================ */
+
+// ---------- IndexedDB (persist audio blobs) ----------
+const DB_NAME = 'mixtape';
+const STORE = 'tracks';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbAdd(track) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).add(track);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbDelete(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbClear() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ---------- State ----------
+let tracks = [];          // { id, name, blob, url }
+let currentIndex = -1;
+let isPlaying = false;
+
+// Two audio elements for gapless crossfade
+const audioA = new Audio();
+const audioB = new Audio();
+audioA.preload = 'auto';
+audioB.preload = 'auto';
+let active = audioA;
+let inactive = audioB;
+
+let crossfadeEnabled = false;
+let crossfadeSeconds = 4;
+let crossfading = false;
+let crossfadeRaf = null;
+
+// ---------- DOM ----------
+const els = {
+  fileInput: document.getElementById('file-input'),
+  tracklist: document.getElementById('tracklist'),
+  empty: document.getElementById('empty'),
+  count: document.getElementById('count'),
+  nowPlaying: document.getElementById('now-playing'),
+  seek: document.getElementById('seek'),
+  timeCurrent: document.getElementById('time-current'),
+  timeTotal: document.getElementById('time-total'),
+  playBtn: document.getElementById('play-btn'),
+  playIcon: document.getElementById('play-icon'),
+  prevBtn: document.getElementById('prev-btn'),
+  nextBtn: document.getElementById('next-btn'),
+  clearBtn: document.getElementById('clear-btn'),
+  shuffleBtn: document.getElementById('shuffle-btn'),
+  speed: document.getElementById('speed'),
+  speedVal: document.getElementById('speed-val'),
+  crossfadeOn: document.getElementById('crossfade-on'),
+  crossfadeSec: document.getElementById('crossfade-sec'),
+  crossfadeVal: document.getElementById('crossfade-val'),
+};
+
+// ---------- Helpers ----------
+const fmtTime = (s) => {
+  if (!isFinite(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const ss = Math.floor(s % 60).toString().padStart(2, '0');
+  return `${m}:${ss}`;
+};
+
+const cleanName = (n) => n.replace(/\.[^.]+$/, '');
+
+function render() {
+  els.count.textContent = `${tracks.length} track${tracks.length === 1 ? '' : 's'}`;
+  if (tracks.length === 0) {
+    els.tracklist.innerHTML = '';
+    els.tracklist.appendChild(els.empty);
+    return;
+  }
+  els.tracklist.innerHTML = '';
+  tracks.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'track' + (i === currentIndex ? ' active' : '');
+    row.innerHTML = `
+      <span class="num">${i === currentIndex && isPlaying ? '♪' : i + 1}</span>
+      <span class="title">${escapeHtml(cleanName(t.name))}</span>
+      <button class="remove" aria-label="Remove">×</button>
+    `;
+    row.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove')) return;
+      playIndex(i);
+    });
+    row.querySelector('.remove').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await removeTrack(i);
+    });
+    els.tracklist.appendChild(row);
+  });
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function updateNowPlaying() {
+  const t = tracks[currentIndex];
+  if (t) {
+    els.nowPlaying.textContent = cleanName(t.name);
+    els.nowPlaying.classList.remove('idle');
+  } else {
+    els.nowPlaying.textContent = 'Nothing playing';
+    els.nowPlaying.classList.add('idle');
+  }
+  if ('mediaSession' in navigator && t) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: cleanName(t.name),
+      artist: 'Mixtape',
+      album: 'My Remixes',
+    });
+  }
+}
+
+function updatePlayIcon() {
+  // Play triangle vs pause bars
+  if (isPlaying) {
+    els.playIcon.innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+    els.playBtn.setAttribute('aria-label', 'Pause');
+  } else {
+    els.playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    els.playBtn.setAttribute('aria-label', 'Play');
+  }
+}
+
+// ---------- Load library from IDB on startup ----------
+async function loadLibrary() {
+  try {
+    const rows = await dbAll();
+    tracks = rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      blob: r.blob,
+      url: URL.createObjectURL(r.blob),
+    }));
+    render();
+  } catch (err) {
+    console.warn('IDB load failed:', err);
+  }
+}
+
+// ---------- Add files ----------
+els.fileInput.addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []);
+  for (const f of files) {
+    const row = { name: f.name, blob: f, addedAt: Date.now() };
+    try {
+      const id = await dbAdd(row);
+      tracks.push({
+        id,
+        name: f.name,
+        blob: f,
+        url: URL.createObjectURL(f),
+      });
+    } catch (err) {
+      console.warn('Failed to save', f.name, err);
+    }
+  }
+  els.fileInput.value = '';
+  render();
+});
+
+// ---------- Remove / Clear ----------
+async function removeTrack(i) {
+  const t = tracks[i];
+  if (!t) return;
+  if (i === currentIndex) stopPlayback();
+  URL.revokeObjectURL(t.url);
+  await dbDelete(t.id);
+  tracks.splice(i, 1);
+  if (i < currentIndex) currentIndex--;
+  else if (i === currentIndex) currentIndex = -1;
+  render();
+}
+
+els.clearBtn.addEventListener('click', async () => {
+  if (!tracks.length) return;
+  if (!confirm('Remove all tracks from Mixtape? (Your original files are not deleted.)')) return;
+  stopPlayback();
+  tracks.forEach((t) => URL.revokeObjectURL(t.url));
+  tracks = [];
+  currentIndex = -1;
+  await dbClear();
+  render();
+  updateNowPlaying();
+});
+
+els.shuffleBtn.addEventListener('click', () => {
+  if (tracks.length < 2) return;
+  const currentId = tracks[currentIndex]?.id;
+  for (let i = tracks.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [tracks[i], tracks[j]] = [tracks[j], tracks[i]];
+  }
+  if (currentId != null) currentIndex = tracks.findIndex((t) => t.id === currentId);
+  render();
+});
+
+// ---------- Playback ----------
+function stopPlayback() {
+  cancelAnimationFrame(crossfadeRaf);
+  crossfading = false;
+  [audioA, audioB].forEach((a) => { a.pause(); a.src = ''; a.volume = 1; });
+  isPlaying = false;
+  updatePlayIcon();
+}
+
+async function playIndex(i) {
+  if (i < 0 || i >= tracks.length) return;
+  // Starting a fresh track — cancel any pending crossfade
+  cancelAnimationFrame(crossfadeRaf);
+  crossfading = false;
+  inactive.pause();
+  inactive.volume = 1;
+
+  currentIndex = i;
+  const t = tracks[i];
+  active.src = t.url;
+  active.playbackRate = parseFloat(els.speed.value);
+  active.volume = 1;
+  try {
+    await active.play();
+    isPlaying = true;
+  } catch (err) {
+    console.warn('Playback error:', err);
+    isPlaying = false;
+  }
+  updatePlayIcon();
+  updateNowPlaying();
+  render();
+}
+
+function togglePlay() {
+  if (currentIndex === -1 && tracks.length > 0) {
+    playIndex(0);
+    return;
+  }
+  if (active.paused) {
+    active.play().then(() => { isPlaying = true; updatePlayIcon(); });
+  } else {
+    active.pause();
+    isPlaying = false;
+    updatePlayIcon();
+  }
+}
+
+function nextTrack() {
+  if (!tracks.length) return;
+  const next = (currentIndex + 1) % tracks.length;
+  playIndex(next);
+}
+
+function prevTrack() {
+  if (!tracks.length) return;
+  // If more than 3s into song, restart it instead
+  if (active.currentTime > 3) {
+    active.currentTime = 0;
+    return;
+  }
+  const prev = (currentIndex - 1 + tracks.length) % tracks.length;
+  playIndex(prev);
+}
+
+els.playBtn.addEventListener('click', togglePlay);
+els.nextBtn.addEventListener('click', nextTrack);
+els.prevBtn.addEventListener('click', prevTrack);
+
+// ---------- Seek bar ----------
+let seeking = false;
+els.seek.addEventListener('input', () => {
+  seeking = true;
+  if (active.duration) {
+    els.timeCurrent.textContent = fmtTime((els.seek.value / 100) * active.duration);
+  }
+});
+els.seek.addEventListener('change', () => {
+  if (active.duration) {
+    active.currentTime = (els.seek.value / 100) * active.duration;
+  }
+  seeking = false;
+});
+
+function tick() {
+  for (const a of [audioA, audioB]) {
+    if (a === active && !seeking && a.duration) {
+      els.seek.value = (a.currentTime / a.duration) * 100;
+      els.timeCurrent.textContent = fmtTime(a.currentTime);
+      els.timeTotal.textContent = fmtTime(a.duration);
+    }
+  }
+
+  // Crossfade trigger
+  if (
+    crossfadeEnabled &&
+    !crossfading &&
+    isPlaying &&
+    active.duration &&
+    tracks.length > 1 &&
+    active.duration - active.currentTime <= crossfadeSeconds
+  ) {
+    startCrossfade();
+  }
+}
+setInterval(tick, 200);
+
+// ---------- Auto-advance at end ----------
+function onEnded() {
+  if (crossfading) return; // handled by crossfade
+  nextTrack();
+}
+audioA.addEventListener('ended', onEnded);
+audioB.addEventListener('ended', onEnded);
+
+// ---------- Crossfade ----------
+function startCrossfade() {
+  const nextIdx = (currentIndex + 1) % tracks.length;
+  const nextTrackData = tracks[nextIdx];
+  if (!nextTrackData) return;
+
+  crossfading = true;
+  inactive.src = nextTrackData.url;
+  inactive.playbackRate = parseFloat(els.speed.value);
+  inactive.volume = 0;
+  inactive.currentTime = 0;
+
+  inactive.play().catch((e) => console.warn('Crossfade play failed:', e));
+
+  const startTime = performance.now();
+  const duration = crossfadeSeconds * 1000;
+
+  const step = (now) => {
+    const t = Math.min((now - startTime) / duration, 1);
+    active.volume = 1 - t;
+    inactive.volume = t;
+    if (t < 1) {
+      crossfadeRaf = requestAnimationFrame(step);
+    } else {
+      active.pause();
+      active.src = '';
+      active.volume = 1;
+      // Swap
+      [active, inactive] = [inactive, active];
+      currentIndex = nextIdx;
+      crossfading = false;
+      updateNowPlaying();
+      render();
+    }
+  };
+  crossfadeRaf = requestAnimationFrame(step);
+}
+
+// ---------- Speed + Crossfade controls ----------
+els.speed.addEventListener('input', () => {
+  const v = parseFloat(els.speed.value);
+  els.speedVal.textContent = v.toFixed(2) + 'x';
+  audioA.playbackRate = v;
+  audioB.playbackRate = v;
+});
+
+els.crossfadeOn.addEventListener('change', () => {
+  crossfadeEnabled = els.crossfadeOn.checked;
+});
+els.crossfadeSec.addEventListener('input', () => {
+  crossfadeSeconds = parseInt(els.crossfadeSec.value, 10);
+  els.crossfadeVal.textContent = crossfadeSeconds + 's';
+});
+
+// ---------- Media Session (lock screen / AirPods controls) ----------
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play', () => togglePlay());
+  navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+  navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+  navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
+  navigator.mediaSession.setActionHandler('seekto', (details) => {
+    if (details.seekTime != null && active.duration) {
+      active.currentTime = details.seekTime;
+    }
+  });
+}
+
+// Update media session state
+audioA.addEventListener('play', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
+audioA.addEventListener('pause', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
+audioB.addEventListener('play', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
+audioB.addEventListener('pause', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
+
+// Prevent iOS from dropping audio focus when screen locks (best-effort)
+document.addEventListener('visibilitychange', () => {
+  // nothing required — Media Session keeps us alive
+});
+
+// ---------- Boot ----------
+loadLibrary();
+</script>
+
+</body>
+</html>
