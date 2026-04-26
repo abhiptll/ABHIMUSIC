@@ -6,339 +6,322 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="APmusic" />
-<meta name="theme-color" content="#0a0a0a" />
-<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%230a0a0a'/><circle cx='90' cy='90' r='56' fill='none' stroke='%23ff3b6b' stroke-width='6'/><circle cx='90' cy='90' r='10' fill='%23ff3b6b'/></svg>" />
+<meta name="theme-color" content="#000000" />
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%23000000'/><circle cx='90' cy='90' r='60' fill='none' stroke='%23ffffff' stroke-width='4'/><circle cx='90' cy='90' r='6' fill='%23ffffff'/></svg>" />
 <title>APmusic</title>
 <style>
   :root {
-    --bg: #0a0a0a;
-    --panel: #151515;
-    --panel-2: #1f1f1f;
-    --text: #f2f2f2;
-    --muted: #888;
-    --accent: #ff3b6b;
-    --accent-2: #6b5bff;
-    --border: #262626;
-    --bpm-slow: #4f9eff;
-    --bpm-mid: #29c7a0;
-    --bpm-house: #f5c84c;
-    --bpm-fast: #ff7a3b;
-    --bpm-dnb: #ff3b6b;
+    --bg: #000000;
+    --surface: #0c0c0c;
+    --surface-2: #161616;
+    --text: #f5f5f5;
+    --muted: #6a6a6a;
+    --muted-2: #4a4a4a;
+    --line: #1a1a1a;
+    --accent: #ffffff;
   }
-
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
   html, body {
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+    font-weight: 400;
     overscroll-behavior: none;
-    -webkit-user-select: none;
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
     height: 100%;
+    -webkit-font-smoothing: antialiased;
   }
-
   body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
+    display: flex; flex-direction: column;
+    min-height: 100vh; min-height: 100dvh;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
+  /* ----- Auth overlay ----- */
+  .auth-overlay {
+    position: fixed; inset: 0;
+    background: var(--bg); z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 32px;
+    padding-top: calc(32px + env(safe-area-inset-top));
+    padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  }
+  .auth-overlay.hidden { display: none; }
+  .auth-card { width: 100%; max-width: 320px; }
+  .auth-card .brand {
+    text-align: center; margin-bottom: 36px;
+  }
+  .auth-card .brand .mark {
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 1.5px solid var(--text);
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+  }
+  .auth-card .brand .mark::after {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--text);
+  }
+  .auth-card .brand h2 {
+    font-size: 20px; font-weight: 700; letter-spacing: 1px;
+  }
+  .auth-tabs {
+    display: flex; gap: 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 22px;
+  }
+  .auth-tab {
+    flex: 1; background: none; border: none;
+    padding: 12px 0; color: var(--muted);
+    font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+    border-bottom: 1.5px solid transparent;
+    margin-bottom: -1px;
+  }
+  .auth-tab.active { color: var(--text); border-bottom-color: var(--text); }
+  .auth-form { display: flex; flex-direction: column; gap: 10px; }
+  .auth-form input {
+    background: var(--surface);
+    border: 1px solid var(--line); color: var(--text);
+    padding: 13px 14px; border-radius: 8px;
+    font-size: 16px; /* >=16px avoids iOS auto-zoom on focus */
+    font-family: inherit; outline: none;
+    -webkit-user-select: text; user-select: text;
+  }
+  .auth-form input:focus { border-color: var(--text); }
+  .auth-form input::placeholder { color: var(--muted-2); }
+  .auth-submit {
+    background: var(--text); color: var(--bg); border: none;
+    padding: 13px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; letter-spacing: 0.5px;
+    cursor: pointer; margin-top: 6px; font-family: inherit;
+  }
+  .auth-submit:active { opacity: 0.85; }
+  .auth-error {
+    color: #ff6b6b; font-size: 12px; text-align: center;
+    min-height: 16px; margin-top: 6px; letter-spacing: 0.2px;
+  }
+  .auth-hint {
+    text-align: center; font-size: 11px; color: var(--muted);
+    margin-top: 28px; letter-spacing: 0.3px; line-height: 1.6;
+  }
+
+  /* ----- Header ----- */
   header {
-    padding: 16px 20px 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 22px 24px 14px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  header h1 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  header h1 { font-size: 17px; font-weight: 600; letter-spacing: 0.5px; }
+  .user-chip {
+    background: transparent; border: 1px solid var(--line);
+    color: var(--text); padding: 6px 11px; border-radius: 100px;
+    font-size: 11px; font-family: inherit; cursor: pointer;
+    letter-spacing: 0.3px;
+    display: inline-flex; align-items: center; gap: 5px;
   }
-  header .count {
-    font-size: 12px;
-    color: var(--muted);
+  .user-chip:active { background: var(--surface); }
+  .user-chip .ct {
+    color: var(--muted); font-size: 10px;
+    border-left: 1px solid var(--line); padding-left: 7px;
+    font-variant-numeric: tabular-nums;
   }
 
-  .toolbar {
-    display: flex;
-    gap: 8px;
-    padding: 8px 20px 12px;
-    flex-wrap: wrap;
-  }
+  /* ----- Toolbar ----- */
+  .toolbar { display: flex; gap: 6px; padding: 0 20px 12px; align-items: center; }
   .btn {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    background: transparent; border: 1px solid var(--line); color: var(--text);
+    padding: 9px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: inherit; letter-spacing: 0.2px;
   }
-  .btn:active { background: var(--panel-2); transform: scale(0.97); }
-  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; }
-  .btn.danger { color: #ff6b6b; }
-  .btn.sm { padding: 8px 10px; font-size: 13px; }
-
+  .btn:active { background: var(--surface); }
+  .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+  .btn.icon { padding: 9px 10px; color: var(--muted); }
+  .btn.icon:active { color: var(--text); }
+  .spacer { flex: 1; }
   input[type="file"] { display: none; }
 
-  .tracklist {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 12px 260px;
+  /* ----- Folder bar ----- */
+  .folder-bar {
+    display: flex; gap: 6px; padding: 0 20px 14px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .folder-bar::-webkit-scrollbar { display: none; }
+  .folder-chip {
+    flex-shrink: 0; padding: 6px 12px; border-radius: 100px;
+    border: 1px solid var(--line); background: transparent;
+    color: var(--muted);
+    font-size: 12px; font-weight: 500; letter-spacing: 0.3px;
+    cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .folder-chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .folder-chip .ct { opacity: 0.5; font-size: 10px; font-variant-numeric: tabular-nums; }
+  .folder-chip.new { border-style: dashed; color: var(--muted); }
+
+  /* ----- Tracklist ----- */
+  .tracklist { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 8px 240px; }
+  .group-header {
+    padding: 18px 16px 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--muted);
   }
   .track {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    margin: 4px 0;
-    background: var(--panel);
-    border: 1px solid transparent;
-    cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+    cursor: pointer; position: relative;
   }
-  .track.active {
-    border-color: var(--accent);
-    background: linear-gradient(135deg, rgba(255,59,107,0.14), rgba(107,91,255,0.14));
+  .track:active, .track.active { background: var(--surface); }
+  .track.active::before {
+    content: ''; position: absolute; left: 0; top: 18%; bottom: 18%; width: 2px; background: var(--accent);
   }
-  .track .num {
-    width: 22px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-  }
+  .track .meta { flex: 1; min-width: 0; }
   .track .title {
-    flex: 1;
-    min-width: 0;
-    font-size: 15px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 15px; font-weight: 500; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .bpm-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 54px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    background: var(--panel-2);
-    color: var(--muted);
-    border: 1px solid var(--border);
+  .track .sub {
+    margin-top: 3px; font-size: 11px; color: var(--muted); letter-spacing: 0.3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .bpm-pill.has { color: #0a0a0a; border-color: transparent; }
-  .bpm-pill .u { font-size: 9px; opacity: 0.7; margin-left: 2px; font-weight: 600; }
-  .bpm-pill .spinner {
+  .track .sub .dot { margin: 0 6px; color: var(--muted-2); }
+  .track .sub .editable { color: var(--muted); }
+  .track .sub .editable:active { color: var(--text); }
+  .track .sub .editable.empty { color: var(--muted-2); font-style: italic; }
+  .track .right {
+    display: flex; align-items: center; gap: 4px; color: var(--muted);
+    font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: 0.4px;
+  }
+  .track .right .spinner {
     width: 10px; height: 10px; border-radius: 50%;
-    border: 2px solid var(--border);
-    border-top-color: var(--text);
+    border: 1.5px solid var(--line); border-top-color: var(--text);
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .track .remove {
-    color: var(--muted);
-    padding: 6px 8px;
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
+    background: none; border: none; color: var(--muted-2);
+    font-size: 18px; padding: 4px 8px; cursor: pointer; margin-left: 4px;
   }
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-    font-size: 15px;
-    line-height: 1.6;
-  }
-  .empty strong { color: var(--text); display: block; font-size: 17px; margin-bottom: 8px; }
+  .track .remove:active { color: var(--text); }
 
+  .empty {
+    text-align: center; padding: 80px 32px;
+    color: var(--muted); font-size: 13px; line-height: 1.7;
+  }
+  .empty strong { color: var(--text); display: block; font-size: 15px; margin-bottom: 10px; font-weight: 500; }
+
+  /* ----- Player ----- */
   .player {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(15, 15, 15, 0.92);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-top: 1px solid var(--border);
-    padding: 14px 18px calc(18px + env(safe-area-inset-bottom));
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    border-top: 1px solid var(--line);
+    padding: 16px 22px calc(18px + env(safe-area-inset-bottom));
     z-index: 10;
   }
-  .np-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .now-playing {
-    flex: 1;
-    min-width: 0;
-    font-size: 14px;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text);
-  }
-  .now-playing.idle { color: var(--muted); font-weight: 400; }
-  .np-bpm { font-size: 16px; font-weight: 800; padding: 6px 10px; min-width: 60px; }
+  .np-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .now-playing { flex: 1; min-width: 0; overflow: hidden; }
+  .now-playing .title { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .now-playing .title.idle { color: var(--muted); font-weight: 400; }
+  .now-playing .meta { font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: 0.4px; text-transform: uppercase; }
 
-  .seek {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .seek .time {
-    font-size: 11px;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-    min-width: 38px;
-  }
+  .seek { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .seek .time { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; min-width: 32px; }
   .seek input[type="range"] { flex: 1; }
-
   input[type="range"] {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 4px;
-    background: var(--panel-2);
-    border-radius: 2px;
-    outline: none;
+    -webkit-appearance: none; appearance: none;
+    height: 2px; background: var(--surface-2); border-radius: 1px; outline: none;
   }
   input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--accent);
-    border-radius: 50%;
-    cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    width: 12px; height: 12px; background: var(--accent); border-radius: 50%; cursor: pointer;
   }
 
-  .controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 22px;
-    margin-bottom: 14px;
-  }
-  .ctrl {
-    background: none;
-    border: none;
-    color: var(--text);
-    padding: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .ctrl svg { width: 28px; height: 28px; }
-  .ctrl.play {
-    background: var(--text);
-    color: var(--bg);
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-  }
-  .ctrl.play svg { width: 26px; height: 26px; }
-  .ctrl:disabled { opacity: 0.3; }
+  .controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-bottom: 14px; }
+  .ctrl { background: none; border: none; color: var(--text); padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .ctrl svg { width: 22px; height: 22px; }
+  .ctrl.play { background: var(--text); color: var(--bg); width: 44px; height: 44px; border-radius: 50%; }
+  .ctrl.play svg { width: 18px; height: 18px; }
+  .ctrl:active { opacity: 0.6; }
 
-  .crossfade {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-  }
-  .crossfade .label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .crossfade input[type="checkbox"] {
-    accent-color: var(--accent);
-    width: 18px; height: 18px;
-  }
-  .crossfade input[type="range"] { flex: 1; min-width: 60px; }
-  .crossfade .val {
-    font-size: 13px;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-    min-width: 36px;
-    text-align: right;
-    font-weight: 600;
-  }
-  .crossfade.off .val, .crossfade.off input[type="range"] { opacity: 0.4; }
+  .crossfade { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+  .crossfade .label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); letter-spacing: 0.4px; text-transform: uppercase; font-weight: 500; }
+  .crossfade.on .label { color: var(--text); }
+  .crossfade input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; }
+  .crossfade input[type="range"] { flex: 1; min-width: 50px; }
+  .crossfade .val { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 24px; text-align: right; letter-spacing: 0.4px; }
+  .crossfade.on .val { color: var(--text); }
+  .crossfade.off .val, .crossfade.off input[type="range"] { opacity: 0.35; }
 </style>
 </head>
 <body>
 
+<!-- Auth overlay -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="mark"></div>
+      <h2>APMUSIC</h2>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="signin">Sign In</button>
+      <button class="auth-tab" data-tab="signup">Sign Up</button>
+    </div>
+    <form class="auth-form" id="auth-form" autocomplete="on">
+      <input type="text" id="auth-username" placeholder="Username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required />
+      <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit" class="auth-submit" id="auth-submit">Continue</button>
+      <div class="auth-error" id="auth-error"></div>
+    </form>
+    <p class="auth-hint">
+      Accounts live on this device only.<br/>
+      Each login keeps its own library, folders, and tags.
+    </p>
+  </div>
+</div>
+
 <header>
   <h1>APmusic</h1>
-  <span class="count" id="count">0 tracks</span>
+  <button class="user-chip" id="user-chip">
+    <span id="user-name">@guest</span>
+    <span class="ct" id="count">0</span>
+  </button>
 </header>
 
 <div class="toolbar">
-  <label class="btn primary" for="file-input">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-    Add Songs
-  </label>
+  <label class="btn primary" for="file-input">+ Add</label>
   <input type="file" id="file-input" multiple />
-  <button class="btn sm" id="sort-bpm-btn" title="Sort by BPM low to high">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h13M3 12h9M3 18h5M17 4v16M17 20l-3-3M17 20l3-3"/></svg>
-    Sort BPM
-  </button>
-  <button class="btn sm" id="shuffle-btn" title="Shuffle playlist">
+  <button class="btn" id="sort-btn">Sort</button>
+  <span class="spacer"></span>
+  <button class="btn icon" id="shuffle-btn" aria-label="Shuffle">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-    Shuffle
   </button>
-  <button class="btn sm danger" id="clear-btn" title="Remove all tracks">Clear</button>
+  <button class="btn icon" id="clear-btn" aria-label="Clear all">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+  </button>
 </div>
+
+<div class="folder-bar" id="folder-bar"></div>
 
 <div class="tracklist" id="tracklist">
   <div class="empty" id="empty">
     <strong>No tracks yet</strong>
-    Tap <b>Add Songs</b> to pick your remixes from the Files app on your iPhone.
-    BPMs auto-detect after import.
+    Tap <b>+ Add</b> to pick remixes from your iPhone's Files.<br/>
+    BPMs detect automatically. Tap a track's tags to set genre or folder.
   </div>
 </div>
 
 <div class="player">
   <div class="np-row">
-    <div class="now-playing idle" id="now-playing">Nothing playing</div>
-    <div class="bpm-pill np-bpm" id="np-bpm" style="display:none;"></div>
+    <div class="now-playing">
+      <div class="title idle" id="np-title">Nothing playing</div>
+      <div class="meta" id="np-meta"></div>
+    </div>
   </div>
-
   <div class="seek">
     <span class="time" id="time-current">0:00</span>
     <input type="range" id="seek" min="0" max="100" value="0" step="0.1" />
     <span class="time" id="time-total">0:00</span>
   </div>
-
   <div class="controls">
     <button class="ctrl" id="prev-btn" aria-label="Previous">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM9.5 12l8.5 6V6z"/></svg>
@@ -350,7 +333,6 @@
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>
     </button>
   </div>
-
   <div class="crossfade off" id="crossfade-box">
     <label class="label"><input type="checkbox" id="crossfade-on" /> Crossfade</label>
     <input type="range" id="crossfade-sec" min="1" max="12" value="4" step="1" />
@@ -360,99 +342,138 @@
 
 <script>
 /* ============================================================
-   APmusic — a DJ-friendly music player for iOS home-screen.
-   Single-file PWA. Persists tracks + BPMs in IndexedDB.
+   APmusic — minimalist DJ player with local accounts.
+   - PWA single file
+   - Per-user IndexedDB (apmusic_user_<name>)
+   - Per-user folder list in localStorage
+   - Accounts in localStorage with SHA-256 password hashes
    ============================================================ */
 
-// ---------- IndexedDB ----------
-const DB_NAME = 'apmusic';
+// ---------- Auth state ----------
+let currentUser = null;
+let accounts = {};
+let authMode = 'signin';
+
+function loadAccounts() {
+  try { accounts = JSON.parse(localStorage.getItem('apmusic_accounts') || '{}'); }
+  catch (e) { accounts = {}; }
+}
+function saveAccounts() {
+  try { localStorage.setItem('apmusic_accounts', JSON.stringify(accounts)); } catch (e) {}
+}
+
+async function hashPassword(p) {
+  const buf = new TextEncoder().encode(p);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function signUp(username, password) {
+  if (!username || !password) throw new Error('Fill in both fields.');
+  if (username.length < 3) throw new Error('Username needs 3+ characters.');
+  if (!/^[a-zA-Z0-9_.-]+$/.test(username)) throw new Error('Letters, numbers, _ . - only.');
+  if (password.length < 4) throw new Error('Password needs 4+ characters.');
+  if (accounts[username]) throw new Error('Username already exists.');
+  accounts[username] = { hash: await hashPassword(password), createdAt: Date.now() };
+  saveAccounts();
+  await setCurrentUser(username);
+}
+
+async function signIn(username, password) {
+  if (!username || !password) throw new Error('Fill in both fields.');
+  if (!accounts[username]) throw new Error('No account with that username.');
+  const h = await hashPassword(password);
+  if (h !== accounts[username].hash) throw new Error('Wrong password.');
+  await setCurrentUser(username);
+}
+
+async function setCurrentUser(username) {
+  currentUser = username;
+  try { localStorage.setItem('apmusic_user', username); } catch (e) {}
+  document.getElementById('auth-overlay').classList.add('hidden');
+  document.getElementById('user-name').textContent = '@' + username;
+  loadFoldersForUser();
+  await loadLibrary();
+}
+
+function logout() {
+  if (!currentUser) return;
+  if (!confirm(`Log out @${currentUser}?`)) return;
+  stopPlayback();
+  tracks.forEach((t) => URL.revokeObjectURL(t.url));
+  tracks = [];
+  currentIndex = -1;
+  extraFolders = [];
+  currentFolder = null;
+  sortMode = 'default';
+  updateSortLabel();
+  currentUser = null;
+  try { localStorage.removeItem('apmusic_user'); } catch (e) {}
+  document.getElementById('user-name').textContent = '@guest';
+  document.getElementById('count').textContent = '0';
+  render();
+  updateNowPlaying();
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  document.getElementById('auth-username').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-error').textContent = '';
+}
+
+// ---------- IndexedDB (per-user) ----------
 const STORE = 'tracks';
-const DB_VERSION = 2;
+const DB_VERSION = 1;
+function dbName() { return currentUser ? `apmusic_user_${currentUser}` : 'apmusic_guest'; }
+function foldersKey() { return `apmusic_folders_${currentUser || 'guest'}`; }
 
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
+    const req = indexedDB.open(dbName(), DB_VERSION);
+    req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE)) {
         db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
       }
-      // v2: bpm column (no migration needed, stored per-row)
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 }
+const dbAdd = (track) => openDB().then((db) => new Promise((res, rej) => {
+  const r = db.transaction(STORE, 'readwrite').objectStore(STORE).add(track);
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+}));
+const dbGet = (id) => openDB().then((db) => new Promise((res, rej) => {
+  const r = db.transaction(STORE, 'readonly').objectStore(STORE).get(id);
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+}));
+const dbPut = (track) => openDB().then((db) => new Promise((res, rej) => {
+  const r = db.transaction(STORE, 'readwrite').objectStore(STORE).put(track);
+  r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+}));
+const dbAll = () => openDB().then((db) => new Promise((res, rej) => {
+  const r = db.transaction(STORE, 'readonly').objectStore(STORE).getAll();
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+}));
+const dbDelete = (id) => openDB().then((db) => new Promise((res, rej) => {
+  const r = db.transaction(STORE, 'readwrite').objectStore(STORE).delete(id);
+  r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+}));
+const dbClear = () => openDB().then((db) => new Promise((res, rej) => {
+  const r = db.transaction(STORE, 'readwrite').objectStore(STORE).clear();
+  r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+}));
 
-async function dbAdd(track) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const req = tx.objectStore(STORE).add(track);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function dbGet(id) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).get(id);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function dbPut(track) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const req = tx.objectStore(STORE).put(track);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function dbAll() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function dbDelete(id) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const req = tx.objectStore(STORE).delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function dbClear() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const req = tx.objectStore(STORE).clear();
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-// ---------- State ----------
-let tracks = []; // { id, name, blob, url, bpm, bpmStatus: 'none'|'detecting'|'done'|'failed' }
+// ---------- App state ----------
+let tracks = [];
 let currentIndex = -1;
 let isPlaying = false;
+let sortMode = 'default';
+let currentFolder = null;
+let extraFolders = [];
 
 const audioA = new Audio();
 const audioB = new Audio();
-audioA.preload = 'auto';
-audioB.preload = 'auto';
+audioA.preload = 'auto'; audioB.preload = 'auto';
 let active = audioA;
 let inactive = audioB;
 
@@ -464,14 +485,22 @@ let crossfadeRaf = null;
 const bpmQueue = [];
 let bpmWorking = false;
 
+function loadFoldersForUser() {
+  try { extraFolders = JSON.parse(localStorage.getItem(foldersKey()) || '[]'); }
+  catch (e) { extraFolders = []; }
+}
+function saveFolders() {
+  try { localStorage.setItem(foldersKey(), JSON.stringify(extraFolders)); } catch (e) {}
+}
+
 // ---------- DOM ----------
 const els = {
   fileInput: document.getElementById('file-input'),
   tracklist: document.getElementById('tracklist'),
   empty: document.getElementById('empty'),
   count: document.getElementById('count'),
-  nowPlaying: document.getElementById('now-playing'),
-  npBpm: document.getElementById('np-bpm'),
+  npTitle: document.getElementById('np-title'),
+  npMeta: document.getElementById('np-meta'),
   seek: document.getElementById('seek'),
   timeCurrent: document.getElementById('time-current'),
   timeTotal: document.getElementById('time-total'),
@@ -481,11 +510,20 @@ const els = {
   nextBtn: document.getElementById('next-btn'),
   clearBtn: document.getElementById('clear-btn'),
   shuffleBtn: document.getElementById('shuffle-btn'),
-  sortBpmBtn: document.getElementById('sort-bpm-btn'),
+  sortBtn: document.getElementById('sort-btn'),
+  folderBar: document.getElementById('folder-bar'),
   crossfadeBox: document.getElementById('crossfade-box'),
   crossfadeOn: document.getElementById('crossfade-on'),
   crossfadeSec: document.getElementById('crossfade-sec'),
   crossfadeVal: document.getElementById('crossfade-val'),
+  userChip: document.getElementById('user-chip'),
+  userName: document.getElementById('user-name'),
+  authOverlay: document.getElementById('auth-overlay'),
+  authForm: document.getElementById('auth-form'),
+  authUsername: document.getElementById('auth-username'),
+  authPassword: document.getElementById('auth-password'),
+  authError: document.getElementById('auth-error'),
+  authSubmit: document.getElementById('auth-submit'),
 };
 
 // ---------- Helpers ----------
@@ -495,60 +533,328 @@ const fmtTime = (s) => {
   const ss = Math.floor(s % 60).toString().padStart(2, '0');
   return `${m}:${ss}`;
 };
-
 const cleanName = (n) => n.replace(/\.[^.]+$/, '');
+const escapeHtml = (s) => (s || '').replace(/[&<>"']/g, (c) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[c]));
 
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
+// ---------- ID3 (genre from MP3) ----------
+const ID3V1_GENRES = [
+  'Blues','Classic Rock','Country','Dance','Disco','Funk','Grunge','Hip-Hop','Jazz','Metal',
+  'New Age','Oldies','Other','Pop','R&B','Rap','Reggae','Rock','Techno','Industrial',
+  'Alternative','Ska','Death Metal','Pranks','Soundtrack','Euro-Techno','Ambient','Trip-Hop','Vocal','Jazz+Funk',
+  'Fusion','Trance','Classical','Instrumental','Acid','House','Game','Sound Clip','Gospel','Noise',
+  'AlternRock','Bass','Soul','Punk','Space','Meditative','Instrumental Pop','Instrumental Rock','Ethnic','Gothic',
+  'Darkwave','Techno-Industrial','Electronic','Pop-Folk','Eurodance','Dream','Southern Rock','Comedy','Cult','Gangsta',
+  'Top 40','Christian Rap','Pop/Funk','Jungle','Native American','Cabaret','New Wave','Psychadelic','Rave','Showtunes',
+  'Trailer','Lo-Fi','Tribal','Acid Punk','Acid Jazz','Polka','Retro','Musical','Rock & Roll','Hard Rock',
+  'Folk','Folk/Rock','National Folk','Swing','Fusion','Bebop','Latin','Revival','Celtic','Bluegrass',
+  'Avantgarde','Gothic Rock','Progressive Rock','Psychedelic Rock','Symphonic Rock','Slow Rock','Big Band','Chorus','Easy Listening','Acoustic',
+  'Humour','Speech','Chanson','Opera','Chamber Music','Sonata','Symphony','Booty Bass','Primus','Porn Groove',
+  'Satire','Slow Jam','Club','Tango','Samba','Folklore','Ballad','Power Ballad','Rhythmic Soul','Freestyle',
+  'Duet','Punk Rock','Drum Solo','A Capella','Euro-House','Dance Hall'
+];
+function decodeText(bytes, encoding) {
+  try {
+    if (encoding === 0) return new TextDecoder('iso-8859-1').decode(bytes);
+    if (encoding === 1 || encoding === 2) return new TextDecoder('utf-16').decode(bytes);
+    if (encoding === 3) return new TextDecoder('utf-8').decode(bytes);
+    return new TextDecoder().decode(bytes);
+  } catch (e) { return ''; }
+}
+function normalizeGenre(g) {
+  if (!g) return null;
+  g = g.trim().replace(/\0+$/, '');
+  if (!g) return null;
+  let m = g.match(/^\((\d+)\)\s*(.*)$/);
+  if (m) {
+    const num = parseInt(m[1], 10);
+    if (m[2]) return m[2].trim();
+    return ID3V1_GENRES[num] || null;
+  }
+  if (/^\d+$/.test(g)) return ID3V1_GENRES[parseInt(g, 10)] || null;
+  return g;
+}
+async function readMP3Tags(blob) {
+  try {
+    const head = await blob.slice(0, Math.min(blob.size, 262144)).arrayBuffer();
+    const bytes = new Uint8Array(head);
+    if (bytes.length < 10) return null;
+    if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) return null;
+    const major = bytes[3];
+    const tagSize = ((bytes[6] & 0x7f) << 21) | ((bytes[7] & 0x7f) << 14) | ((bytes[8] & 0x7f) << 7) | (bytes[9] & 0x7f);
+    const result = {};
+    let pos = 10;
+    const end = Math.min(10 + tagSize, bytes.length);
+    while (pos + 10 < end) {
+      const fid = String.fromCharCode(bytes[pos], bytes[pos+1], bytes[pos+2], bytes[pos+3]);
+      if (!/^[A-Z0-9]{4}$/.test(fid)) break;
+      let frameSize;
+      if (major === 4) {
+        frameSize = ((bytes[pos+4] & 0x7f) << 21) | ((bytes[pos+5] & 0x7f) << 14) | ((bytes[pos+6] & 0x7f) << 7) | (bytes[pos+7] & 0x7f);
+      } else {
+        frameSize = (bytes[pos+4] << 24) | (bytes[pos+5] << 16) | (bytes[pos+6] << 8) | bytes[pos+7];
+      }
+      if (frameSize <= 0 || pos + 10 + frameSize > bytes.length) break;
+      const dataStart = pos + 10;
+      if (['TIT2','TPE1','TCON','TALB'].includes(fid) && frameSize > 1) {
+        const enc = bytes[dataStart];
+        const data = bytes.slice(dataStart + 1, dataStart + frameSize);
+        result[fid] = decodeText(data, enc).replace(/\0+$/, '').trim();
+      }
+      pos += 10 + frameSize;
+    }
+    return { title: result.TIT2 || null, artist: result.TPE1 || null, album: result.TALB || null, genre: normalizeGenre(result.TCON) };
+  } catch (e) { return null; }
 }
 
-function bpmColor(bpm) {
-  if (!bpm) return null;
-  if (bpm < 100) return 'var(--bpm-slow)';
-  if (bpm < 120) return 'var(--bpm-mid)';
-  if (bpm < 130) return 'var(--bpm-house)';
-  if (bpm < 150) return 'var(--bpm-fast)';
-  return 'var(--bpm-dnb)';
+// ---------- BPM detection ----------
+async function detectBPM(blob) {
+  let ctx;
+  try {
+    const ab = await blob.arrayBuffer();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    const audioBuffer = await ctx.decodeAudioData(ab.slice(0));
+    ctx.close();
+    const sr = audioBuffer.sampleRate;
+    const maxSamples = Math.min(audioBuffer.length, sr * 30);
+    const offline = new OfflineAudioContext(1, maxSamples, sr);
+    const src = offline.createBufferSource(); src.buffer = audioBuffer;
+    const filter = offline.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 150; filter.Q.value = 1;
+    src.connect(filter); filter.connect(offline.destination); src.start(0);
+    const rendered = await offline.startRendering();
+    const data = rendered.getChannelData(0);
+    let max = 0;
+    for (let i = 0; i < data.length; i++) { const v = Math.abs(data[i]); if (v > max) max = v; }
+    if (max === 0) return null;
+    const threshold = max * 0.88;
+    const minGap = Math.floor(sr * 0.2);
+    const peaks = [];
+    let i = 0;
+    while (i < data.length) { if (Math.abs(data[i]) >= threshold) { peaks.push(i); i += minGap; } else i++; }
+    if (peaks.length < 6) return null;
+    const counts = {};
+    for (let a = 0; a < peaks.length - 1; a++) {
+      const kMax = Math.min(10, peaks.length - a - 1);
+      for (let k = 1; k <= kMax; k++) {
+        const ds = (peaks[a + k] - peaks[a]) / sr;
+        if (ds <= 0) continue;
+        let bpm = (60 / ds) * k;
+        while (bpm < 80) bpm *= 2;
+        while (bpm > 200) bpm /= 2;
+        bpm = Math.round(bpm);
+        counts[bpm] = (counts[bpm] || 0) + 1;
+      }
+    }
+    let best = 0, score = 0;
+    for (const k of Object.keys(counts).map(Number)) {
+      const s = (counts[k-1] || 0) + (counts[k] || 0) + (counts[k+1] || 0);
+      if (s > score) { score = s; best = k; }
+    }
+    return best || null;
+  } catch (e) {
+    try { if (ctx && ctx.state !== 'closed') ctx.close(); } catch (_) {}
+    return null;
+  }
+}
+function enqueueBPM(id) { bpmQueue.push(id); processBPMQueue(); }
+async function processBPMQueue() {
+  if (bpmWorking) return;
+  bpmWorking = true;
+  while (bpmQueue.length) {
+    const id = bpmQueue.shift();
+    const t = tracks.find((x) => x.id === id);
+    if (!t || t.bpm) continue;
+    t.bpmStatus = 'detecting'; render();
+    const bpm = await detectBPM(t.blob);
+    t.bpm = bpm || null;
+    t.bpmStatus = bpm ? 'done' : 'failed';
+    try { const row = await dbGet(id); if (row) { row.bpm = bpm || null; await dbPut(row); } } catch (e) {}
+    if (currentIndex >= 0 && tracks[currentIndex]?.id === id) updateNowPlaying();
+    render();
+  }
+  bpmWorking = false;
 }
 
-function bpmPillHTML(track) {
-  if (track.bpmStatus === 'detecting') {
-    return `<span class="bpm-pill"><span class="spinner"></span></span>`;
+// ---------- Folders ----------
+function allFolders() {
+  const set = new Set();
+  for (const t of tracks) if (t.folder) set.add(t.folder);
+  for (const f of extraFolders) set.add(f);
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+function folderCount(name) { return tracks.filter((t) => t.folder === name).length; }
+function newFolder() {
+  const name = prompt('New folder name:');
+  if (name == null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  if (!allFolders().includes(trimmed)) { extraFolders.push(trimmed); saveFolders(); }
+  currentFolder = trimmed;
+  render();
+}
+async function manageFolder(name) {
+  const action = prompt(`Folder "${name}"\n\nType new name to rename, or "delete" to remove (tracks become unfoldered).`, name);
+  if (action == null) return;
+  const next = action.trim();
+  if (!next) return;
+  if (next.toLowerCase() === 'delete') {
+    if (!confirm(`Delete folder "${name}"?`)) return;
+    for (const t of tracks) {
+      if (t.folder === name) {
+        t.folder = null;
+        try { const row = await dbGet(t.id); if (row) { row.folder = null; await dbPut(row); } } catch (e) {}
+      }
+    }
+    extraFolders = extraFolders.filter((x) => x !== name); saveFolders();
+    if (currentFolder === name) currentFolder = null;
+    render();
+    return;
   }
-  if (track.bpm) {
-    const color = bpmColor(track.bpm);
-    return `<span class="bpm-pill has" style="background:${color}">${track.bpm}<span class="u">BPM</span></span>`;
+  if (next === name) return;
+  for (const t of tracks) {
+    if (t.folder === name) {
+      t.folder = next;
+      try { const row = await dbGet(t.id); if (row) { row.folder = next; await dbPut(row); } } catch (e) {}
+    }
   }
-  return `<span class="bpm-pill">—</span>`;
+  extraFolders = extraFolders.filter((x) => x !== name);
+  if (!allFolders().includes(next)) extraFolders.push(next);
+  saveFolders();
+  if (currentFolder === name) currentFolder = next;
+  render();
+}
+async function editFolder(id) {
+  const t = tracks.find((x) => x.id === id);
+  if (!t) return;
+  const existing = allFolders();
+  const hint = existing.length ? `\n\nExisting folders: ${existing.join(', ')}` : '';
+  const next = prompt(`Folder for "${cleanName(t.name)}":${hint}\n\n(blank to remove from folder)`, t.folder || '');
+  if (next == null) return;
+  const trimmed = next.trim();
+  t.folder = trimmed || null;
+  if (trimmed && !allFolders().includes(trimmed)) { extraFolders.push(trimmed); saveFolders(); }
+  try { const row = await dbGet(id); if (row) { row.folder = t.folder; await dbPut(row); } } catch (e) {}
+  render();
 }
 
 // ---------- Render ----------
+function renderFolderBar() {
+  const folders = allFolders();
+  els.folderBar.innerHTML = '';
+  if (tracks.length === 0 && folders.length === 0) { els.folderBar.style.display = 'none'; return; }
+  els.folderBar.style.display = 'flex';
+
+  const all = document.createElement('button');
+  all.className = 'folder-chip' + (currentFolder === null ? ' active' : '');
+  all.innerHTML = `All<span class="ct">${tracks.length}</span>`;
+  all.addEventListener('click', () => { currentFolder = null; render(); });
+  els.folderBar.appendChild(all);
+
+  for (const f of folders) {
+    const chip = document.createElement('button');
+    const isActive = currentFolder === f;
+    chip.className = 'folder-chip' + (isActive ? ' active' : '');
+    chip.innerHTML = `${escapeHtml(f)}<span class="ct">${folderCount(f)}</span>`;
+    chip.addEventListener('click', () => {
+      if (isActive) manageFolder(f);
+      else { currentFolder = f; render(); }
+    });
+    els.folderBar.appendChild(chip);
+  }
+
+  const add = document.createElement('button');
+  add.className = 'folder-chip new';
+  add.textContent = '+ New';
+  add.addEventListener('click', newFolder);
+  els.folderBar.appendChild(add);
+}
+
+function sortedView() {
+  let view = currentFolder !== null ? tracks.filter((t) => t.folder === currentFolder) : tracks.slice();
+  if (sortMode === 'bpm') view.sort((a, b) => (a.bpm ?? 9999) - (b.bpm ?? 9999));
+  else if (sortMode === 'genre') view.sort((a, b) => {
+    const ag = (a.genre || 'Unsorted').toLowerCase();
+    const bg = (b.genre || 'Unsorted').toLowerCase();
+    if (ag !== bg) return ag.localeCompare(bg);
+    return cleanName(a.name).localeCompare(cleanName(b.name));
+  });
+  else if (sortMode === 'name') view.sort((a, b) => cleanName(a.name).localeCompare(cleanName(b.name)));
+  return view;
+}
+
+function subHTML(t) {
+  const parts = [];
+  if (t.genre) parts.push(`<span class="editable" data-edit="genre" data-id="${t.id}">${escapeHtml(t.genre)}</span>`);
+  else parts.push(`<span class="editable empty" data-edit="genre" data-id="${t.id}">+ genre</span>`);
+  if (t.folder) parts.push(`<span class="editable" data-edit="folder" data-id="${t.id}">${escapeHtml(t.folder)}</span>`);
+  else parts.push(`<span class="editable empty" data-edit="folder" data-id="${t.id}">+ folder</span>`);
+  return parts.join('<span class="dot">·</span>');
+}
+
 function render() {
-  els.count.textContent = `${tracks.length} track${tracks.length === 1 ? '' : 's'}`;
-  if (tracks.length === 0) {
-    els.tracklist.innerHTML = '';
-    els.tracklist.appendChild(els.empty);
+  renderFolderBar();
+  const view = sortedView();
+  els.count.textContent = `${tracks.length}`;
+  els.tracklist.innerHTML = '';
+
+  if (view.length === 0) {
+    if (tracks.length === 0) els.tracklist.appendChild(els.empty);
+    else {
+      const e = document.createElement('div');
+      e.className = 'empty';
+      e.innerHTML = `<strong>Empty folder</strong>Tap a track elsewhere and assign it to <em>${escapeHtml(currentFolder)}</em>.`;
+      els.tracklist.appendChild(e);
+    }
     return;
   }
-  els.tracklist.innerHTML = '';
-  tracks.forEach((t, i) => {
+
+  let lastGroup = null;
+  view.forEach((t) => {
+    if (sortMode === 'genre') {
+      const g = t.genre || 'Unsorted';
+      if (g !== lastGroup) {
+        const h = document.createElement('div');
+        h.className = 'group-header'; h.textContent = g;
+        els.tracklist.appendChild(h);
+        lastGroup = g;
+      }
+    }
     const row = document.createElement('div');
-    row.className = 'track' + (i === currentIndex ? ' active' : '');
+    const isCurrent = t.id === tracks[currentIndex]?.id;
+    row.className = 'track' + (isCurrent ? ' active' : '');
+    let rightHTML;
+    if (t.bpmStatus === 'detecting') rightHTML = '<span class="spinner"></span>';
+    else if (t.bpm) rightHTML = `${t.bpm} BPM`;
+    else rightHTML = '—';
     row.innerHTML = `
-      <span class="num">${i === currentIndex && isPlaying ? '♪' : i + 1}</span>
-      <span class="title">${escapeHtml(cleanName(t.name))}</span>
-      ${bpmPillHTML(t)}
+      <div class="meta">
+        <div class="title">${escapeHtml(cleanName(t.name))}</div>
+        <div class="sub">${subHTML(t)}</div>
+      </div>
+      <div class="right">${rightHTML}</div>
       <button class="remove" aria-label="Remove">×</button>
     `;
     row.addEventListener('click', (e) => {
-      if (e.target.classList.contains('remove')) return;
-      playIndex(i);
+      const tgt = e.target;
+      if (tgt.classList.contains('remove')) return;
+      if (tgt.classList.contains('editable')) {
+        e.stopPropagation();
+        const kind = tgt.dataset.edit;
+        if (kind === 'genre') editGenre(t.id);
+        else if (kind === 'folder') editFolder(t.id);
+        return;
+      }
+      const realIdx = tracks.findIndex((x) => x.id === t.id);
+      playIndex(realIdx);
     });
     row.querySelector('.remove').addEventListener('click', async (e) => {
       e.stopPropagation();
-      await removeTrack(i);
+      const realIdx = tracks.findIndex((x) => x.id === t.id);
+      await removeTrack(realIdx);
     });
     els.tracklist.appendChild(row);
   });
@@ -557,206 +863,77 @@ function render() {
 function updateNowPlaying() {
   const t = tracks[currentIndex];
   if (t) {
-    els.nowPlaying.textContent = cleanName(t.name);
-    els.nowPlaying.classList.remove('idle');
-    if (t.bpm) {
-      els.npBpm.style.display = '';
-      els.npBpm.className = 'bpm-pill np-bpm has';
-      els.npBpm.style.background = bpmColor(t.bpm);
-      els.npBpm.innerHTML = `${t.bpm}<span class="u">BPM</span>`;
-    } else {
-      els.npBpm.style.display = 'none';
-    }
+    els.npTitle.textContent = cleanName(t.name);
+    els.npTitle.classList.remove('idle');
+    const parts = [];
+    if (t.bpm) parts.push(`${t.bpm} BPM`);
+    if (t.genre) parts.push(t.genre);
+    if (t.folder) parts.push(t.folder);
+    els.npMeta.textContent = parts.join(' · ');
   } else {
-    els.nowPlaying.textContent = 'Nothing playing';
-    els.nowPlaying.classList.add('idle');
-    els.npBpm.style.display = 'none';
+    els.npTitle.textContent = 'Nothing playing';
+    els.npTitle.classList.add('idle');
+    els.npMeta.textContent = '';
   }
   if ('mediaSession' in navigator && t) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: cleanName(t.name),
-      artist: t.bpm ? `${t.bpm} BPM` : 'APmusic',
+      artist: [t.genre, t.folder].filter(Boolean).join(' · ') || (t.bpm ? `${t.bpm} BPM` : 'APmusic'),
       album: 'My Remixes',
     });
   }
 }
-
 function updatePlayIcon() {
-  if (isPlaying) {
-    els.playIcon.innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
-    els.playBtn.setAttribute('aria-label', 'Pause');
-  } else {
-    els.playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    els.playBtn.setAttribute('aria-label', 'Play');
-  }
+  els.playIcon.innerHTML = isPlaying ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
 }
 
-// ---------- BPM detection ----------
-/**
- * Detect BPM by low-pass filtering audio and finding peak intervals.
- * Uses only the first 30 seconds for speed. Works well for tracks
- * with a steady kick (most remixes).
- */
-async function detectBPM(blob) {
-  let ctx;
-  try {
-    const arrayBuffer = await blob.arrayBuffer();
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    ctx = new AC();
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
-    ctx.close();
-
-    const sampleRate = audioBuffer.sampleRate;
-    const maxSamples = Math.min(audioBuffer.length, sampleRate * 30);
-
-    const offline = new OfflineAudioContext(1, maxSamples, sampleRate);
-    const source = offline.createBufferSource();
-    source.buffer = audioBuffer;
-
-    const filter = offline.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 150;
-    filter.Q.value = 1;
-
-    source.connect(filter);
-    filter.connect(offline.destination);
-    source.start(0);
-
-    const rendered = await offline.startRendering();
-    const data = rendered.getChannelData(0);
-
-    // Find max amplitude
-    let max = 0;
-    for (let i = 0; i < data.length; i++) {
-      const v = Math.abs(data[i]);
-      if (v > max) max = v;
-    }
-    if (max === 0) return null;
-
-    // Find peaks above 88% of max, min 200ms spacing
-    const threshold = max * 0.88;
-    const minGap = Math.floor(sampleRate * 0.2);
-    const peaks = [];
-    let i = 0;
-    while (i < data.length) {
-      if (Math.abs(data[i]) >= threshold) {
-        peaks.push(i);
-        i += minGap;
-      } else {
-        i++;
-      }
-    }
-
-    if (peaks.length < 6) return null;
-
-    // Gather BPM candidates from peak-pair intervals
-    const counts = {};
-    for (let a = 0; a < peaks.length - 1; a++) {
-      const kMax = Math.min(10, peaks.length - a - 1);
-      for (let k = 1; k <= kMax; k++) {
-        const deltaSec = (peaks[a + k] - peaks[a]) / sampleRate;
-        if (deltaSec <= 0) continue;
-        let bpm = (60 / deltaSec) * k;
-        while (bpm < 80) bpm *= 2;
-        while (bpm > 200) bpm /= 2;
-        bpm = Math.round(bpm);
-        counts[bpm] = (counts[bpm] || 0) + 1;
-      }
-    }
-
-    // Find the most frequent BPM, with a small smoothing window
-    const keys = Object.keys(counts).map(Number).sort((a, b) => a - b);
-    let bestBpm = 0, bestScore = 0;
-    for (const k of keys) {
-      // Sum a 3-BPM window so close values reinforce
-      const score = (counts[k - 1] || 0) + (counts[k] || 0) + (counts[k + 1] || 0);
-      if (score > bestScore) {
-        bestScore = score;
-        bestBpm = k;
-      }
-    }
-    return bestBpm || null;
-  } catch (err) {
-    console.warn('BPM detection failed:', err);
-    try { if (ctx && ctx.state !== 'closed') ctx.close(); } catch (e) {}
-    return null;
-  }
+async function editGenre(id) {
+  const t = tracks.find((x) => x.id === id);
+  if (!t) return;
+  const next = prompt(`Genre for "${cleanName(t.name)}":\n\n(blank to remove)`, t.genre || '');
+  if (next == null) return;
+  const trimmed = next.trim();
+  t.genre = trimmed || null;
+  try { const row = await dbGet(id); if (row) { row.genre = t.genre; await dbPut(row); } } catch (e) {}
+  if (currentIndex >= 0 && tracks[currentIndex].id === id) updateNowPlaying();
+  render();
 }
 
-function enqueueBPM(trackId) {
-  bpmQueue.push(trackId);
-  processBPMQueue();
-}
-
-async function processBPMQueue() {
-  if (bpmWorking) return;
-  bpmWorking = true;
-  while (bpmQueue.length) {
-    const id = bpmQueue.shift();
-    const t = tracks.find((x) => x.id === id);
-    if (!t || t.bpm) continue;
-    t.bpmStatus = 'detecting';
-    render();
-    const bpm = await detectBPM(t.blob);
-    t.bpm = bpm || null;
-    t.bpmStatus = bpm ? 'done' : 'failed';
-    try {
-      const row = await dbGet(id);
-      if (row) { row.bpm = bpm || null; await dbPut(row); }
-    } catch (e) { /* ignore */ }
-    if (currentIndex >= 0 && tracks[currentIndex]?.id === id) updateNowPlaying();
-    render();
-  }
-  bpmWorking = false;
-}
-
-// ---------- Load library from IDB ----------
+// ---------- Load library (per-user) ----------
 async function loadLibrary() {
   try {
     const rows = await dbAll();
     tracks = rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      blob: r.blob,
-      url: URL.createObjectURL(r.blob),
-      bpm: r.bpm || null,
+      id: r.id, name: r.name, blob: r.blob, url: URL.createObjectURL(r.blob),
+      bpm: r.bpm || null, genre: r.genre || null, folder: r.folder || null,
       bpmStatus: r.bpm ? 'done' : 'none',
     }));
     render();
-    // Kick off BPM detection for any tracks missing it
     tracks.filter((t) => !t.bpm).forEach((t) => enqueueBPM(t.id));
-  } catch (err) {
-    console.warn('IDB load failed:', err);
-  }
+  } catch (err) { console.warn('IDB load failed:', err); }
 }
 
 // ---------- Add files ----------
 els.fileInput.addEventListener('change', async (e) => {
   const files = Array.from(e.target.files || []);
   for (const f of files) {
-    // Basic filter: if an audio type is set, use it; otherwise trust the user picked audio
-    const row = { name: f.name, blob: f, addedAt: Date.now(), bpm: null };
+    let genre = null;
+    if (/\.mp3$/i.test(f.name) || (f.type && f.type.includes('mpeg'))) {
+      const tags = await readMP3Tags(f);
+      if (tags && tags.genre) genre = tags.genre;
+    }
+    const folder = currentFolder || null;
+    const row = { name: f.name, blob: f, addedAt: Date.now(), bpm: null, genre, folder };
     try {
       const id = await dbAdd(row);
-      tracks.push({
-        id,
-        name: f.name,
-        blob: f,
-        url: URL.createObjectURL(f),
-        bpm: null,
-        bpmStatus: 'none',
-      });
+      tracks.push({ id, name: f.name, blob: f, url: URL.createObjectURL(f), bpm: null, genre, folder, bpmStatus: 'none' });
       enqueueBPM(id);
-    } catch (err) {
-      console.warn('Failed to save', f.name, err);
-    }
+    } catch (err) { console.warn('Failed to save', f.name, err); }
+    render();
   }
   els.fileInput.value = '';
-  render();
 });
 
-// ---------- Remove / Clear / Sort / Shuffle ----------
 async function removeTrack(i) {
   const t = tracks[i];
   if (!t) return;
@@ -772,7 +949,7 @@ async function removeTrack(i) {
 
 els.clearBtn.addEventListener('click', async () => {
   if (!tracks.length) return;
-  if (!confirm('Remove all tracks from APmusic? (Your original files are not deleted.)')) return;
+  if (!confirm('Remove all tracks from your library? (Original files are not deleted.)')) return;
   stopPlayback();
   tracks.forEach((t) => URL.revokeObjectURL(t.url));
   tracks = [];
@@ -790,18 +967,18 @@ els.shuffleBtn.addEventListener('click', () => {
     [tracks[i], tracks[j]] = [tracks[j], tracks[i]];
   }
   if (currentId != null) currentIndex = tracks.findIndex((t) => t.id === currentId);
+  sortMode = 'default';
+  updateSortLabel();
   render();
 });
 
-els.sortBpmBtn.addEventListener('click', () => {
-  if (tracks.length < 2) return;
-  const currentId = tracks[currentIndex]?.id;
-  tracks.sort((a, b) => {
-    const av = a.bpm ?? 9999;
-    const bv = b.bpm ?? 9999;
-    return av - bv;
-  });
-  if (currentId != null) currentIndex = tracks.findIndex((t) => t.id === currentId);
+const SORT_CYCLE = ['default', 'bpm', 'genre', 'name'];
+const SORT_LABELS = { default: 'Sort', bpm: 'Sort: BPM', genre: 'Sort: Genre', name: 'Sort: A→Z' };
+function updateSortLabel() { els.sortBtn.textContent = SORT_LABELS[sortMode]; }
+els.sortBtn.addEventListener('click', () => {
+  const idx = SORT_CYCLE.indexOf(sortMode);
+  sortMode = SORT_CYCLE[(idx + 1) % SORT_CYCLE.length];
+  updateSortLabel();
   render();
 });
 
@@ -813,145 +990,88 @@ function stopPlayback() {
   isPlaying = false;
   updatePlayIcon();
 }
-
 async function playIndex(i) {
   if (i < 0 || i >= tracks.length) return;
   cancelAnimationFrame(crossfadeRaf);
   crossfading = false;
-  inactive.pause();
-  inactive.volume = 1;
-
+  inactive.pause(); inactive.volume = 1;
   currentIndex = i;
   const t = tracks[i];
   active.src = t.url;
   active.volume = 1;
-  try {
-    await active.play();
-    isPlaying = true;
-  } catch (err) {
-    console.warn('Playback error:', err);
-    isPlaying = false;
-  }
-  updatePlayIcon();
-  updateNowPlaying();
-  render();
+  try { await active.play(); isPlaying = true; }
+  catch (e) { console.warn('Playback error:', e); isPlaying = false; }
+  updatePlayIcon(); updateNowPlaying(); render();
 }
-
 function togglePlay() {
-  if (currentIndex === -1 && tracks.length > 0) {
-    playIndex(0);
-    return;
-  }
-  if (active.paused) {
-    active.play().then(() => { isPlaying = true; updatePlayIcon(); });
-  } else {
-    active.pause();
-    isPlaying = false;
-    updatePlayIcon();
-  }
+  if (currentIndex === -1 && tracks.length > 0) { playIndex(0); return; }
+  if (active.paused) { active.play().then(() => { isPlaying = true; updatePlayIcon(); }); }
+  else { active.pause(); isPlaying = false; updatePlayIcon(); }
 }
-
-function nextTrack() {
-  if (!tracks.length) return;
-  const next = (currentIndex + 1) % tracks.length;
-  playIndex(next);
-}
-
+function nextTrack() { if (tracks.length) playIndex((currentIndex + 1) % tracks.length); }
 function prevTrack() {
   if (!tracks.length) return;
-  if (active.currentTime > 3) {
-    active.currentTime = 0;
-    return;
-  }
-  const prev = (currentIndex - 1 + tracks.length) % tracks.length;
-  playIndex(prev);
+  if (active.currentTime > 3) { active.currentTime = 0; return; }
+  playIndex((currentIndex - 1 + tracks.length) % tracks.length);
 }
-
 els.playBtn.addEventListener('click', togglePlay);
 els.nextBtn.addEventListener('click', nextTrack);
 els.prevBtn.addEventListener('click', prevTrack);
 
-// ---------- Seek ----------
 let seeking = false;
 els.seek.addEventListener('input', () => {
   seeking = true;
-  if (active.duration) {
-    els.timeCurrent.textContent = fmtTime((els.seek.value / 100) * active.duration);
-  }
+  if (active.duration) els.timeCurrent.textContent = fmtTime((els.seek.value / 100) * active.duration);
 });
 els.seek.addEventListener('change', () => {
-  if (active.duration) {
-    active.currentTime = (els.seek.value / 100) * active.duration;
-  }
+  if (active.duration) active.currentTime = (els.seek.value / 100) * active.duration;
   seeking = false;
 });
-
 function tick() {
   if (active && !seeking && active.duration) {
     els.seek.value = (active.currentTime / active.duration) * 100;
     els.timeCurrent.textContent = fmtTime(active.currentTime);
     els.timeTotal.textContent = fmtTime(active.duration);
   }
-
   if (
-    crossfadeEnabled &&
-    !crossfading &&
-    isPlaying &&
-    active.duration &&
-    tracks.length > 1 &&
+    crossfadeEnabled && !crossfading && isPlaying &&
+    active.duration && tracks.length > 1 &&
     active.duration - active.currentTime <= crossfadeSeconds
-  ) {
-    startCrossfade();
-  }
+  ) startCrossfade();
 }
 setInterval(tick, 200);
-
-function onEnded() {
-  if (crossfading) return;
-  nextTrack();
-}
+function onEnded() { if (!crossfading) nextTrack(); }
 audioA.addEventListener('ended', onEnded);
 audioB.addEventListener('ended', onEnded);
 
-// ---------- Crossfade ----------
 function startCrossfade() {
   const nextIdx = (currentIndex + 1) % tracks.length;
-  const nextTrackData = tracks[nextIdx];
-  if (!nextTrackData) return;
-
+  const nt = tracks[nextIdx];
+  if (!nt) return;
   crossfading = true;
-  inactive.src = nextTrackData.url;
-  inactive.volume = 0;
-  inactive.currentTime = 0;
-
-  inactive.play().catch((e) => console.warn('Crossfade play failed:', e));
-
-  const startTime = performance.now();
-  const duration = crossfadeSeconds * 1000;
-
+  inactive.src = nt.url;
+  inactive.volume = 0; inactive.currentTime = 0;
+  inactive.play().catch(() => {});
+  const start = performance.now();
+  const dur = crossfadeSeconds * 1000;
   const step = (now) => {
-    const t = Math.min((now - startTime) / duration, 1);
+    const t = Math.min((now - start) / dur, 1);
     active.volume = 1 - t;
     inactive.volume = t;
-    if (t < 1) {
-      crossfadeRaf = requestAnimationFrame(step);
-    } else {
-      active.pause();
-      active.src = '';
-      active.volume = 1;
+    if (t < 1) crossfadeRaf = requestAnimationFrame(step);
+    else {
+      active.pause(); active.src = ''; active.volume = 1;
       [active, inactive] = [inactive, active];
       currentIndex = nextIdx;
       crossfading = false;
-      updateNowPlaying();
-      render();
+      updateNowPlaying(); render();
     }
   };
   crossfadeRaf = requestAnimationFrame(step);
 }
-
-// ---------- Crossfade controls ----------
 els.crossfadeOn.addEventListener('change', () => {
   crossfadeEnabled = els.crossfadeOn.checked;
+  els.crossfadeBox.classList.toggle('on', crossfadeEnabled);
   els.crossfadeBox.classList.toggle('off', !crossfadeEnabled);
 });
 els.crossfadeSec.addEventListener('input', () => {
@@ -959,26 +1079,61 @@ els.crossfadeSec.addEventListener('input', () => {
   els.crossfadeVal.textContent = crossfadeSeconds + 's';
 });
 
-// ---------- Media Session (lock screen / AirPods) ----------
 if ('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('play', () => togglePlay());
   navigator.mediaSession.setActionHandler('pause', () => togglePlay());
   navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
   navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
-  navigator.mediaSession.setActionHandler('seekto', (details) => {
-    if (details.seekTime != null && active.duration) {
-      active.currentTime = details.seekTime;
-    }
+  navigator.mediaSession.setActionHandler('seekto', (d) => {
+    if (d.seekTime != null && active.duration) active.currentTime = d.seekTime;
   });
 }
+[audioA, audioB].forEach((a) => {
+  a.addEventListener('play', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
+  a.addEventListener('pause', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
+});
 
-audioA.addEventListener('play', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
-audioA.addEventListener('pause', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
-audioB.addEventListener('play', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
-audioB.addEventListener('pause', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
+// ---------- Auth wiring ----------
+document.querySelectorAll('.auth-tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab').forEach((t) => t.classList.remove('active'));
+    tab.classList.add('active');
+    authMode = tab.dataset.tab;
+    els.authError.textContent = '';
+    els.authPassword.setAttribute('autocomplete', authMode === 'signup' ? 'new-password' : 'current-password');
+    els.authSubmit.textContent = authMode === 'signup' ? 'Create Account' : 'Continue';
+  });
+});
+
+els.authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = els.authUsername.value.trim();
+  const password = els.authPassword.value;
+  els.authError.textContent = '';
+  els.authSubmit.disabled = true;
+  try {
+    if (authMode === 'signup') await signUp(username, password);
+    else await signIn(username, password);
+    els.authUsername.value = '';
+    els.authPassword.value = '';
+  } catch (err) {
+    els.authError.textContent = err.message || 'Something went wrong.';
+  } finally {
+    els.authSubmit.disabled = false;
+  }
+});
+
+els.userChip.addEventListener('click', logout);
 
 // ---------- Boot ----------
-loadLibrary();
+updateSortLabel();
+loadAccounts();
+const savedUser = localStorage.getItem('apmusic_user');
+if (savedUser && accounts[savedUser]) {
+  setCurrentUser(savedUser);
+} else {
+  els.authOverlay.classList.remove('hidden');
+}
 </script>
 
 </body>
